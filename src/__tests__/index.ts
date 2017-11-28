@@ -1,0 +1,191 @@
+import gql from 'graphql-tag';
+import { ApolloLink, execute, Observable } from 'apollo-link';
+import { sha256 } from 'js-sha256';
+import { print, parse } from 'graphql';
+import { createHttpLink } from 'apollo-link-http';
+import { cloneDeep, find, times } from 'lodash';
+
+import { createPersistedQuery, VERSION } from '../';
+
+const makeAliasFields = (fieldName, numAliases) =>
+  times(numAliases, idx => `${fieldName}${idx}: ${fieldName}`).reduce(
+    (aliasBody, currentAlias) => `${aliasBody}\n    ${currentAlias}`,
+  );
+
+const sleep = ms => new Promise(s => setTimeout(s, ms));
+const query = gql`
+  query Test($id: ID!) {
+    foo(id: $id) {
+      bar
+      ${makeAliasFields('title', 1000)}
+    }
+  }
+`;
+
+const variables = { id: 1 };
+const queryString = print(query);
+const hash = sha256
+  .create()
+  .update(queryString)
+  .hex();
+
+const data = {
+  foo: { bar: true },
+};
+const response = JSON.stringify({ data });
+const errors = [{ message: 'PersistedQueryNotFound' }];
+const giveUpErrors = [{ message: 'PersistedQueryNotSupported' }];
+const multipleErrors = [...errors, { message: 'not logged in' }];
+const errorResponse = JSON.stringify({ errors });
+const giveUpResponse = JSON.stringify({ errors: giveUpErrors });
+const multiResponse = JSON.stringify({ errors: multipleErrors });
+
+const mockObserver = jest.fn(observer => {
+  setTimeout(() => {
+    observer.next({ data });
+    observer.complete();
+  }, 10);
+});
+const mockApolloLink = new ApolloLink(() => new Observable(mockObserver));
+
+const mockErrorObserver = jest.fn(observer => {
+  setTimeout(() => {
+    observer.error(new Error('something went wrong!'));
+  }, 10);
+});
+const mockErroredLink = new ApolloLink(() => new Observable(mockErrorObserver));
+
+describe('happy path', () => {
+  beforeEach(fetch.mockReset);
+  it('sends a sha256 hash of the query under extensions', done => {
+    fetch.mockResponseOnce(response);
+    const link = createPersistedQuery().concat(createHttpLink());
+
+    execute(link, { query, variables }).subscribe(result => {
+      expect(result.data).toEqual(data);
+      const [uri, request] = fetch.mock.calls[0];
+      expect(uri).toEqual('/graphql');
+      expect(request.body).toBe(
+        JSON.stringify({
+          operationName: 'Test',
+          variables,
+          extensions: {
+            persistedQuery: {
+              version: VERSION,
+              sha256Hash: hash,
+            },
+          },
+        }),
+      );
+      done();
+    }, done.fail);
+  });
+  it('sends a version along with the request', done => {
+    fetch.mockResponseOnce(response);
+    const link = createPersistedQuery().concat(createHttpLink());
+
+    execute(link, { query, variables }).subscribe(result => {
+      expect(result.data).toEqual(data);
+      const [uri, request] = fetch.mock.calls[0];
+      expect(uri).toEqual('/graphql');
+      const parsed = JSON.parse(request.body);
+      expect(parsed.extensions.persistedQuery.version).toBe(VERSION);
+      done();
+    }, done.fail);
+  });
+
+  it('errors if unable to convert to sha256', done => {
+    fetch.mockResponseOnce(response);
+    const link = createPersistedQuery().concat(createHttpLink());
+
+    execute(link, { query: '1234', variables }).subscribe(done.fail, error => {
+      expect(error.message).toMatch(/Invalid AST Node/);
+      done();
+    });
+  });
+  it('unsubscribes correctly', done => {
+    const delay = new ApolloLink(() => {
+      return new Observable(ob => {
+        setTimeout(() => {
+          ob.next({ data });
+          ob.complete();
+        }, 100);
+      });
+    });
+    const link = createPersistedQuery().concat(delay);
+
+    const sub = execute(link, { query, variables }).subscribe(
+      done.fail,
+      done.fail,
+      done.fail,
+    );
+
+    setTimeout(() => {
+      sub.unsubscribe();
+      done();
+    }, 10);
+  });
+});
+describe('failure path', () => {
+  beforeEach(fetch.mockReset);
+  it('correctly identifies the error shape from the server', done => {
+    fetch.mockResponseOnce(errorResponse);
+    fetch.mockResponseOnce(response);
+    const link = createPersistedQuery().concat(createHttpLink());
+
+    execute(link, { query, variables }).subscribe(result => {
+      expect(result.data).toEqual(data);
+      const [_, failure] = fetch.mock.calls[0];
+      expect(JSON.parse(failure.body).query).not.toBeDefined();
+      const [uri, success] = fetch.mock.calls[1];
+      expect(JSON.parse(success.body).query).toBe(queryString);
+      expect(
+        JSON.parse(success.body).extensions.persistedQuery.sha256Hash,
+      ).toBe(hash);
+      done();
+    }, done.fail);
+  });
+  it('does not try again after recieving NotSupported error', done => {
+    fetch.mockResponseOnce(giveUpResponse);
+    fetch.mockResponseOnce(response);
+
+    // mock it again so we can verify it doesn't try anymore
+    fetch.mockResponseOnce(response);
+    const link = createPersistedQuery().concat(createHttpLink());
+
+    execute(link, { query, variables }).subscribe(result => {
+      expect(result.data).toEqual(data);
+      const [_, failure] = fetch.mock.calls[0];
+      expect(JSON.parse(failure.body).query).not.toBeDefined();
+      const [uri, success] = fetch.mock.calls[1];
+      expect(JSON.parse(success.body).query).toBe(queryString);
+      expect(JSON.parse(success.body).extensions).toBeUndefined();
+      execute(link, { query, variables }).subscribe(secondResult => {
+        expect(secondResult.data).toEqual(data);
+
+        const [uri, success] = fetch.mock.calls[2];
+        expect(JSON.parse(success.body).query).toBe(queryString);
+        expect(JSON.parse(success.body).extensions).toBeUndefined();
+        done();
+      }, done.fail);
+    }, done.fail);
+  });
+
+  it('works with multiple errors', done => {
+    fetch.mockResponseOnce(multiResponse);
+    fetch.mockResponseOnce(response);
+    const link = createPersistedQuery().concat(createHttpLink());
+
+    execute(link, { query, variables }).subscribe(result => {
+      expect(result.data).toEqual(data);
+      const [_, failure] = fetch.mock.calls[0];
+      expect(JSON.parse(failure.body).query).not.toBeDefined();
+      const [uri, success] = fetch.mock.calls[1];
+      expect(JSON.parse(success.body).query).toBe(queryString);
+      expect(
+        JSON.parse(success.body).extensions.persistedQuery.sha256Hash,
+      ).toBe(hash);
+      done();
+    }, done.fail);
+  });
+});

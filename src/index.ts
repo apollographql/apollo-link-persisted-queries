@@ -21,14 +21,14 @@ export const defaultOptions = {
 export const createPersistedQueryLink = (
   { generateHash }: Options = defaultOptions,
 ) => {
-  let doesNotSupportPersistedQueries = false;
+  let supportsPersistedQueries = true;
 
   const calculated: Map<DocumentNode, string> = new Map();
   return new ApolloLink((operation, forward) => {
     const { query } = operation;
 
     let hashError;
-    if (!doesNotSupportPersistedQueries) {
+    if (supportsPersistedQueries) {
       let hash = calculated.get(query);
       if (!hash) {
         try {
@@ -51,8 +51,8 @@ export const createPersistedQueryLink = (
         return;
       }
 
-      let subscription;
-      let tried;
+      let subscription: ZenObservable.Subscription;
+      let tried = false;
       const handler = {
         next: ({ data, errors, ...rest }) => {
           if (
@@ -68,7 +68,7 @@ export const createPersistedQueryLink = (
                 ({ message }) => message === 'PersistedQueryNotSupported',
               )
             ) {
-              doesNotSupportPersistedQueries = true;
+              supportsPersistedQueries = false;
             }
 
             tried = true;
@@ -78,7 +78,7 @@ export const createPersistedQueryLink = (
             operation.setContext({
               http: {
                 includeQuery: true,
-                includeExtensions: !doesNotSupportPersistedQueries,
+                includeExtensions: supportsPersistedQueries,
               },
             });
             subscription = forward(operation).subscribe(handler);
@@ -94,8 +94,8 @@ export const createPersistedQueryLink = (
       // don't send the query the first time
       operation.setContext({
         http: {
-          includeQuery: doesNotSupportPersistedQueries,
-          includeExtensions: !doesNotSupportPersistedQueries,
+          includeQuery: !supportsPersistedQueries,
+          includeExtensions: supportsPersistedQueries,
         },
       });
       subscription = forward(operation).subscribe(handler);

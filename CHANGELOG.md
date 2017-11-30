@@ -2,6 +2,9 @@
 
 ### vNEXT
 
+### 0.0.1-beta.0
+- added memoziation to hash generation based on equality of ASTs
+
 ### 0.0.1-alpha.4
 - improved failsafe if server doesn't support persisted queries
 

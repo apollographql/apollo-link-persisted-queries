@@ -93,6 +93,25 @@ describe('happy path', () => {
       done();
     }, done.fail);
   });
+  it('memoizes between requests', done => {
+    fetch.mockResponseOnce(response);
+    fetch.mockResponseOnce(response);
+    const link = createPersistedQuery().concat(createHttpLink());
+
+    let start = new Date();
+    execute(link, { query, variables }).subscribe(result => {
+      const firstRun = new Date() - start;
+      expect(result.data).toEqual(data);
+      // this one should go faster becuase of memoization
+      let secondStart = new Date();
+      execute(link, { query, variables }).subscribe(result2 => {
+        const secondRun = new Date() - secondStart;
+        expect(firstRun).toBeGreaterThan(secondRun);
+        expect(result2.data).toEqual(data);
+        done();
+      }, done.fail);
+    }, done.fail);
+  });
 
   it('errors if unable to convert to sha256', done => {
     fetch.mockResponseOnce(response);

@@ -6,22 +6,30 @@ export const VERSION = 1;
 
 export const createPersistedQuery = () => {
   let doesNotSupportPersistedQueries = false;
+
+  const calculated: Map<DocumentNode, string> = new Map();
   return new ApolloLink((operation, forward) => {
     const { query } = operation;
 
     let hashError;
-    let hash;
-    try {
-      hash = sha256()
-        .update(print(query))
-        .digest('hex');
-    } catch (e) {
-      hashError = e;
+    if (!doesNotSupportPersistedQueries) {
+      let hash = calculated.get(query);
+      if (!hash) {
+        try {
+          hash = sha256()
+            .update(print(query))
+            .digest('hex');
+          calculated.set(query, hash);
+        } catch (e) {
+          hashError = e;
+        }
+      }
+
+      operation.extensions.persistedQuery = {
+        version: VERSION,
+        sha256Hash: hash,
+      };
     }
-    operation.extensions.persistedQuery = {
-      version: VERSION,
-      sha256Hash: hash,
-    };
 
     return new Observable(observer => {
       if (hashError) {

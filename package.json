@@ -1,6 +1,6 @@
 {
   "name": "apollo-link-persisted-queries",
-  "version": "0.0.1-beta.0",
+  "version": "0.0.1-beta.1",
   "description": "Use persisted queries with Apollo Link",
   "author": "James Baxley <james@meteor.com>",
   "license": "MIT",

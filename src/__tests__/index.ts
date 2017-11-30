@@ -5,7 +5,7 @@ import { print, parse } from 'graphql';
 import { createHttpLink } from 'apollo-link-http';
 import { cloneDeep, find, times } from 'lodash';
 
-import { createPersistedQuery, VERSION } from '../';
+import { createPersistedQueryLink as createPersistedQuery, VERSION } from '../';
 
 const makeAliasFields = (fieldName, numAliases) =>
   times(numAliases, idx => `${fieldName}${idx}: ${fieldName}`).reduce(
@@ -29,6 +29,8 @@ const hash = sha256
   .update(queryString)
   .hex();
 
+// support buildtime hash generation
+query.documentId = hash;
 const data = {
   foo: { bar: true },
 };
@@ -110,6 +112,25 @@ describe('happy path', () => {
         expect(result2.data).toEqual(data);
         done();
       }, done.fail);
+    }, done.fail);
+  });
+  it('supports loading the hash from other method', done => {
+    fetch.mockResponseOnce(response);
+    const generateHash = query => query.documentId + 'foo';
+    const link = createPersistedQuery({ generateHash }).concat(
+      createHttpLink(),
+    );
+
+    execute(link, { query, variables }).subscribe(result => {
+      expect(result.data).toEqual(data);
+      const [uri, request] = fetch.mock.calls[0];
+      expect(uri).toEqual('/graphql');
+      const parsed = JSON.parse(request.body);
+      expect(parsed.extensions.persistedQuery.sha256Hash).toBe(
+        `${query.documentId}foo`,
+      );
+
+      done();
     }, done.fail);
   });
 

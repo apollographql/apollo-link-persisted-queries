@@ -5,7 +5,22 @@ import { DocumentNode } from 'graphql';
 
 export const VERSION = 1;
 
-export const createPersistedQuery = () => {
+export type Options = {
+  generateHash?: (DocumentNode) => string;
+};
+
+export const defaultGenerateHash = query =>
+  sha256()
+    .update(print(query))
+    .digest('hex');
+
+export const defaultOptions = {
+  generateHash: defaultGenerateHash,
+};
+
+export const createPersistedQueryLink = (
+  { generateHash }: Options = defaultOptions,
+) => {
   let doesNotSupportPersistedQueries = false;
 
   const calculated: Map<DocumentNode, string> = new Map();
@@ -17,9 +32,7 @@ export const createPersistedQuery = () => {
       let hash = calculated.get(query);
       if (!hash) {
         try {
-          hash = sha256()
-            .update(print(query))
-            .digest('hex');
+          hash = generateHash(query);
           calculated.set(query, hash);
         } catch (e) {
           hashError = e;

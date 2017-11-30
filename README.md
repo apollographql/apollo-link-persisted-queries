@@ -26,14 +26,18 @@ This library is a client implementation for use with Apollo Client by using cust
 The persisted query link requires using the `http-link`. The easiest way to use them together to to concat them into a single link.
 
 ```js
-import { createPersistedQuery } from "apollo-link-persisted-queries";
+import { createPersistedQueryLink } from "apollo-link-persisted-queries";
 import { createHttpLink } from "apollo-link-http";
 
 // use this with Apollo Client
-const link = createPersistedQuery().concat(createHttpLink({ uri: "/graphql" }));
+const link = createPersistedQueryLink().concat(createHttpLink({ uri: "/graphql" }));
 ```
 
 Thats it! Now your client will start sending query signatures instead of the full text resulting in improved network performance!
+
+#### Options
+The createPersistedQueryLink function takes an optional object with configuration. Currently the only supported configutation is a key called `generateHash` which recieves the query and returns the hash. 
+- `generateHash`: a function that takes the query document and returns the hash
 
 ## Apollo Engine
 Apollo Engine supports recieving and fufulling Automatic Persisted Queries. Simply adding this link into your client app will improve your network response times when using Apollo Engine.
@@ -115,3 +119,7 @@ In order to support Automatic Persisted Queries, the client and server must foll
 5. Server fufils response and saves query string + hash for future lookup
 6. Client recieves data and completes request
 
+### Build time generation
+If you want to avoid hashing in the browser, you can use a build script to include the hash as part of the request. Then you pass a function to retrieve that hash when the operation is run. This works well with projects like [this](https://github.com/leoasis/graphql-persisted-document-loader) which uses webpack to generate the hashes at build time.
+
+If you use the above loader, you can pass `{ generateHash: ({ documentId }) => documentId }` to the `createPersistedQueryLink` call.

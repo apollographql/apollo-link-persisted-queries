@@ -2,6 +2,9 @@
 
 ### vNEXT
 
+### 0.0.1-beta.1
+- support hash lookup function for build time generation
+
 ### 0.0.1-beta.0
 - added memoziation to hash generation based on equality of ASTs
 

@@ -1,6 +1,7 @@
 import { ApolloLink, Observable } from 'apollo-link';
 const sha256 = require('hash.js/lib/hash/sha/256');
 import { print } from 'graphql/language/printer';
+import { DocumentNode } from 'graphql';
 
 export const VERSION = 1;
 

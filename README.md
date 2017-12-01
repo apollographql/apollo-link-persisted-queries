@@ -6,14 +6,14 @@ Unlike REST APIs that use a fixed URL to load data, GraphQL provides a rich quer
 
 In practice we've seen GraphQL query sizes ranging well above 10 KB *just for the query text*.  This is actually significant overhead when compared with a simple URL of 50-100 characters.  When paired with the fact that the uplink speed from the client is typically the most bandwidth-constrained part of the chain, large queries can become bottlenecks for client performance.
 
-Automatic Persisted Queries solves this problem by sending a generated id instead of the query text as the request.
+Automatic Persisted Queries solves this problem by sending a generated ID instead of the query text as the request.
 
 For more information about this solution, read [this article announcing Automatic Persisted Queries].
 
 ## How it works
 1. When the client makes a query, it will optimistically send a short (64-byte) cryptographic hash instead of the full query text.
-2. If the backend recognizes the hash, it will retrieve the full text of the query and execute it
-3. If the backend doesn't recogize the hash, it will ask the client to send the hash and the query text to it can store them mapped together for future lookups. During this request, the backend will also fufil the data request.
+2. If the backend recognizes the hash, it will retrieve the full text of the query and execute it.
+3. If the backend doesn't recogize the hash, it will ask the client to send the hash and the query text to it can store them mapped together for future lookups. During this request, the backend will also fulfill the data request.
 
 This library is a client implementation for use with Apollo Client by using custom Apollo Link.
 
@@ -37,14 +37,14 @@ Thats it! Now your client will start sending query signatures instead of the ful
 
 #### Options
 The createPersistedQueryLink function takes an optional object with configuration. Currently the only supported configutation is a key called `generateHash` which recieves the query and returns the hash. 
-- `generateHash`: a function that takes the query document and returns the hash
+- `generateHash`: a function that takes the query document and returns the hash. If not provided, `generateHash` defaults to a fast implementation of sha256 + hex digest.
 
 ## Apollo Engine
-Apollo Engine supports recieving and fufulling Automatic Persisted Queries. Simply adding this link into your client app will improve your network response times when using Apollo Engine.
+Apollo Engine supports recieving and fulfulling Automatic Persisted Queries. Simply adding this link into your client app will improve your network response times when using Apollo Engine.
 
 
-### Protocal
-Automatic Persisted Queries are made up of three parts: the query signature, error responses, and the negotiaion protocal.
+### Protocol
+Automatic Persisted Queries are made up of three parts: the query signature, error responses, and the negotiaion protocol.
 
 **Query Signature**
 The query signature for Automatic Persisted Queries is sent along the extensions field of a request from the client. This is a transport independent way to send extra information along with the operation. 
@@ -62,7 +62,7 @@ The query signature for Automatic Persisted Queries is sent along the extensions
 }
 ```
 
-When sending an Automatic Persisted Query, the client ommits the `query` field normally present, and instead sends an extension field with a `persistedQuery` object as shown above. The hash is a `sha256` hash of the query string.
+When sending an Automatic Persisted Query, the client ommits the `query` field normally present, and instead sends an extension field with a `persistedQuery` object as shown above. The hash algorithm defaults to a `sha256` hash of the query string.
 
 If the client needs to register the hash, the query signature will be the same but include the full query text like so:
 
@@ -103,7 +103,7 @@ If the backend doesn't support Automatic Persisted Queries, or does not want to 
 }
 ```
 
-**Negotiation Protocal**
+**Negotiation Protocol**
 In order to support Automatic Persisted Queries, the client and server must follow the negotiaion steps as outlined here:
 
 *Happy Path*
@@ -116,7 +116,7 @@ In order to support Automatic Persisted Queries, the client and server must foll
 2. Server looks up query based on hash, none is found
 3. Server responds with NotFound error response
 4. Client sends both hash and query string to Server
-5. Server fufils response and saves query string + hash for future lookup
+5. Server fulfills response and saves query string + hash for future lookup
 6. Client recieves data and completes request
 
 ### Build time generation

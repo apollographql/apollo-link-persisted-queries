@@ -10,12 +10,12 @@
   "typings": "./lib/index.d.ts",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/apollographql/apollo-link.git"
+    "url": "git+https://github.com/apollographql/apollo-link-persisted-queries.git"
   },
   "bugs": {
-    "url": "https://github.com/apollographql/apollo-link/issues"
+    "url": "https://github.com/apollographql/apollo-link-persisted-queries/issues"
   },
-  "homepage": "https://github.com/apollographql/apollo-link#readme",
+  "homepage": "https://github.com/apollographql/apollo-link-persisted-queries#readme",
   "scripts": {
     "build:browser":
       "browserify ./lib/bundle.umd.js -o=./lib/bundle.js --i apollo-link --i graphql && npm run minify:browser",

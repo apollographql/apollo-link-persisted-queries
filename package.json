@@ -1,6 +1,6 @@
 {
   "name": "apollo-link-persisted-queries",
-  "version": "0.0.1-beta.1",
+  "version": "0.0.1-beta.2",
   "description": "Use persisted queries with Apollo Link",
   "author": "James Baxley <james@meteor.com>",
   "license": "MIT",
@@ -10,12 +10,15 @@
   "typings": "./lib/index.d.ts",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/apollographql/apollo-link-persisted-queries.git"
+    "url":
+      "git+https://github.com/apollographql/apollo-link-persisted-queries.git"
   },
   "bugs": {
-    "url": "https://github.com/apollographql/apollo-link-persisted-queries/issues"
+    "url":
+      "https://github.com/apollographql/apollo-link-persisted-queries/issues"
   },
-  "homepage": "https://github.com/apollographql/apollo-link-persisted-queries#readme",
+  "homepage":
+    "https://github.com/apollographql/apollo-link-persisted-queries#readme",
   "scripts": {
     "build:browser":
       "browserify ./lib/bundle.umd.js -o=./lib/bundle.js --i apollo-link --i graphql && npm run minify:browser",

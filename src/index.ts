@@ -5,10 +5,17 @@ import { DocumentNode, ExecutionResult } from 'graphql';
 
 export const VERSION = 1;
 
+export interface ErrorResponse {
+  graphQLErrors?: GraphQLError[];
+  networkError?: Error;
+  response?: ExecutionResult;
+  operation: Operation;
+}
+
 namespace PersistedQueryLink {
   export type Options = {
     generateHash?: (DocumentNode) => string;
-    disable?: (result: ExecutionResult, context: any) => boolean;
+    disable?: (error: ErrorResponse) => boolean;
   };
 }
 
@@ -19,16 +26,24 @@ export const defaultGenerateHash = query =>
 
 export const defaultOptions = {
   generateHash: defaultGenerateHash,
-  disable: ({ errors }, { response }) => {
+  disable: ({ graphQLErrors, operation }) => {
     // if the server doesn't support persisted queries, don't try anymore
     if (
-      errors.some(({ message }) => message === 'PersistedQueryNotSupported')
+      graphQLErrors.some(
+        ({ message }) => message === 'PersistedQueryNotSupported',
+      )
     ) {
       return true;
     }
 
+    const { response } = operation.getContext();
     // if the server responds with bad request
-    if (response && response.statusCode && response.statusCode === 400) {
+    // apollo-server responds with 400 for GET and 500 for POST when no query is found
+    if (
+      response &&
+      response.statusCode &&
+      (response.statusCode === 400 || response.statusCode === 500)
+    ) {
       return true;
     }
 
@@ -71,42 +86,49 @@ export const createPersistedQueryLink = (
 
       let subscription: ZenObservable.Subscription;
       let tried = false;
-      const handler = {
-        next: ({ data, errors, ...rest }) => {
-          if (!tried && errors) {
-            tried = true;
+      const retry = ({ response, networkError }, cb) => {
+        if (!tried && response.errors) {
+          tried = true;
 
-            // if the server doesn't support persisted queries, don't try anymore
-            supportsPersistedQueries = !disable(
-              { data, errors, ...rest },
-              operation.getContext(),
-            );
+          const disablePayload = {
+            response,
+            networkError,
+            operation,
+            graphQLErrors: response.errors,
+          };
+          // if the server doesn't support persisted queries, don't try anymore
+          supportsPersistedQueries = !disable(disablePayload);
 
-            // if its not found, we can try it again, otherwise just report the error
-            if (
-              errors.some(
-                ({ message }) => message === 'PersistedQueryNotFound',
-              ) ||
-              !supportsPersistedQueries
-            ) {
-              // need to recall the link chain
-              if (subscription) subscription.unsubscribe();
-              // actually send the query this time
-              operation.setContext({
-                http: {
-                  includeQuery: true,
-                  includeExtensions: supportsPersistedQueries,
-                },
-              });
-              subscription = forward(operation).subscribe(handler);
+          // if its not found, we can try it again, otherwise just report the error
+          if (
+            response.errors.some(
+              ({ message }) => message === 'PersistedQueryNotFound',
+            ) ||
+            !supportsPersistedQueries
+          ) {
+            // need to recall the link chain
+            if (subscription) subscription.unsubscribe();
+            // actually send the query this time
+            operation.setContext({
+              http: {
+                includeQuery: true,
+                includeExtensions: supportsPersistedQueries,
+              },
+            });
+            subscription = forward(operation).subscribe(handler);
 
-              return;
-            }
+            return;
           }
-
-          observer.next({ data, errors, ...rest });
+        }
+        cb();
+      };
+      const handler = {
+        next: response => {
+          retry({ response }, () => observer.next(response));
         },
-        error: observer.error.bind(observer),
+        error: networkError => {
+          retry({ networkError }, () => observer.error(networkError));
+        },
         complete: observer.complete.bind(observer),
       };
 

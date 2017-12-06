@@ -228,4 +228,80 @@ describe('failure path', () => {
       done();
     }, done.fail);
   });
+  it('hanldes a 500 network error and still retries', done => {
+    let failed = false;
+    fetch.mockResponseOnce(response);
+
+    // mock it again so we can verify it doesn't try anymore
+    fetch.mockResponseOnce(response);
+
+    const fetcher = (...args) => {
+      if (!failed) {
+        failed = true;
+        return Promise.resolve({
+          json: () => Promise.resolve('This will blow up'),
+          text: () => Promise.resolve('THIS WILL BLOW UP'),
+          status: 500,
+        });
+      }
+
+      return fetch(...args);
+    };
+    const link = createPersistedQuery().concat(
+      createHttpLink({ fetch: fetcher }),
+    );
+
+    execute(link, { query, variables }).subscribe(result => {
+      expect(result.data).toEqual(data);
+      const [uri, success] = fetch.mock.calls[0];
+      expect(JSON.parse(success.body).query).toBe(queryString);
+      expect(JSON.parse(success.body).extensions).toBeUndefined();
+      execute(link, { query, variables }).subscribe(secondResult => {
+        expect(secondResult.data).toEqual(data);
+
+        const [uri, success] = fetch.mock.calls[1];
+        expect(JSON.parse(success.body).query).toBe(queryString);
+        expect(JSON.parse(success.body).extensions).toBeUndefined();
+        done();
+      }, done.fail);
+    }, done.fail);
+  });
+  it('hanldes a 400 network error and still retries', done => {
+    let failed = false;
+    fetch.mockResponseOnce(response);
+
+    // mock it again so we can verify it doesn't try anymore
+    fetch.mockResponseOnce(response);
+
+    const fetcher = (...args) => {
+      if (!failed) {
+        failed = true;
+        return Promise.resolve({
+          json: () => Promise.resolve('This will blow up'),
+          text: () => Promise.resolve('THIS WILL BLOW UP'),
+          status: 400,
+        });
+      }
+
+      return fetch(...args);
+    };
+    const link = createPersistedQuery().concat(
+      createHttpLink({ fetch: fetcher }),
+    );
+
+    execute(link, { query, variables }).subscribe(result => {
+      expect(result.data).toEqual(data);
+      const [uri, success] = fetch.mock.calls[0];
+      expect(JSON.parse(success.body).query).toBe(queryString);
+      expect(JSON.parse(success.body).extensions).toBeUndefined();
+      execute(link, { query, variables }).subscribe(secondResult => {
+        expect(secondResult.data).toEqual(data);
+
+        const [uri, success] = fetch.mock.calls[1];
+        expect(JSON.parse(success.body).query).toBe(queryString);
+        expect(JSON.parse(success.body).extensions).toBeUndefined();
+        done();
+      }, done.fail);
+    }, done.fail);
+  });
 });

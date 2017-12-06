@@ -26,9 +26,10 @@ export const defaultGenerateHash = query =>
 
 export const defaultOptions = {
   generateHash: defaultGenerateHash,
-  disable: ({ graphQLErrors, operation }) => {
+  disable: ({ graphQLErrors, operation }: ErrorResponse) => {
     // if the server doesn't support persisted queries, don't try anymore
     if (
+      graphQLErrors &&
       graphQLErrors.some(
         ({ message }) => message === 'PersistedQueryNotSupported',
       )
@@ -41,8 +42,8 @@ export const defaultOptions = {
     // apollo-server responds with 400 for GET and 500 for POST when no query is found
     if (
       response &&
-      response.statusCode &&
-      (response.statusCode === 400 || response.statusCode === 500)
+      response.status &&
+      (response.status === 400 || response.status === 500)
     ) {
       return true;
     }
@@ -85,7 +86,7 @@ export const createPersistedQueryLink = (
       }
 
       let subscription: ZenObservable.Subscription;
-      let tried = false;
+      let retried = false;
       const retry = (
         {
           response,
@@ -93,8 +94,8 @@ export const createPersistedQueryLink = (
         }: { response?: ExecutionResult; networkError?: Error },
         cb,
       ) => {
-        if ((!tried && (response && response.errors)) || networkError) {
-          tried = true;
+        if ((!retried && (response && response.errors)) || networkError) {
+          retried = true;
 
           const disablePayload = {
             response,
@@ -107,9 +108,10 @@ export const createPersistedQueryLink = (
 
           // if its not found, we can try it again, otherwise just report the error
           if (
-            response.errors.some(
-              ({ message }) => message === 'PersistedQueryNotFound',
-            ) ||
+            (response &&
+              response.errors.some(
+                ({ message }) => message === 'PersistedQueryNotFound',
+              )) ||
             !supportsPersistedQueries
           ) {
             // need to recall the link chain

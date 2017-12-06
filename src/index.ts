@@ -1,7 +1,7 @@
-import { ApolloLink, Observable } from 'apollo-link';
+import { ApolloLink, Observable, Operation } from 'apollo-link';
 const sha256 = require('hash.js/lib/hash/sha/256');
 import { print } from 'graphql/language/printer';
-import { DocumentNode, ExecutionResult } from 'graphql';
+import { DocumentNode, ExecutionResult, GraphQLError } from 'graphql';
 
 export const VERSION = 1;
 
@@ -86,15 +86,21 @@ export const createPersistedQueryLink = (
 
       let subscription: ZenObservable.Subscription;
       let tried = false;
-      const retry = ({ response, networkError }, cb) => {
-        if (!tried && response.errors) {
+      const retry = (
+        {
+          response,
+          networkError,
+        }: { response?: ExecutionResult; networkError?: Error },
+        cb,
+      ) => {
+        if ((!tried && (response && response.errors)) || networkError) {
           tried = true;
 
           const disablePayload = {
             response,
             networkError,
             operation,
-            graphQLErrors: response.errors,
+            graphQLErrors: response ? response.errors : null,
           };
           // if the server doesn't support persisted queries, don't try anymore
           supportsPersistedQueries = !disable(disablePayload);

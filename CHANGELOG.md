@@ -2,6 +2,9 @@
 
 ### vNEXT
 
+### 0.0.1-beta.3
+- change default error handling to only disable on 400 error, not >= 500
+
 ### 0.0.1-beta.2
 - improve error handling through 500s and optional function to disable
 

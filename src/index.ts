@@ -27,8 +27,8 @@ export const defaultOptions = {
       return true;
     }
 
-    // if the server explodes from trying persisted queries
-    if (response && response.statusCode && response.statusCode >= 500) {
+    // if the server responds with bad request
+    if (response && response.statusCode && response.statusCode === 400) {
       return true;
     }
 
@@ -74,24 +74,34 @@ export const createPersistedQueryLink = (
       const handler = {
         next: ({ data, errors, ...rest }) => {
           if (!tried && errors) {
+            tried = true;
+
             // if the server doesn't support persisted queries, don't try anymore
             supportsPersistedQueries = !disable(
               { data, errors, ...rest },
               operation.getContext(),
             );
 
-            tried = true;
-            // need to recall the link chain
-            if (subscription) subscription.unsubscribe();
-            // actually send the query this time
-            operation.setContext({
-              http: {
-                includeQuery: true,
-                includeExtensions: supportsPersistedQueries,
-              },
-            });
-            subscription = forward(operation).subscribe(handler);
-            return;
+            // if its not found, we can try it again, otherwise just report the error
+            if (
+              errors.some(
+                ({ message }) => message === 'PersistedQueryNotFound',
+              ) ||
+              !supportsPersistedQueries
+            ) {
+              // need to recall the link chain
+              if (subscription) subscription.unsubscribe();
+              // actually send the query this time
+              operation.setContext({
+                http: {
+                  includeQuery: true,
+                  includeExtensions: supportsPersistedQueries,
+                },
+              });
+              subscription = forward(operation).subscribe(handler);
+
+              return;
+            }
           }
 
           observer.next({ data, errors, ...rest });

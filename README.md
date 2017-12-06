@@ -38,7 +38,16 @@ Thats it! Now your client will start sending query signatures instead of the ful
 #### Options
 The createPersistedQueryLink function takes an optional object with configuration. Currently the only supported configutations are a key called `generateHash` which recieves the query and returns the hash, a function to conditionally disabled sending persisted queries on error
 - `generateHash`: a function that takes the query document and returns the hash. If not provided, `generateHash` defaults to a fast implementation of sha256 + hex digest.
-- `disable`: a function which takes the response and context (typically including the fetch response as `response`) and returns a boolean to disable any future persited queries for that session. This defaults to disabling on `PersistedQueryNotSupported` or a 500 or greater status code
+- `disable`: a function which takes an ErrorResponse (see below) and returns a boolean to disable any future persited queries for that session. This defaults to disabling on `PersistedQueryNotSupported` or a 400 or 500 http error
+
+**ErrorResponse**
+The arugment that the optional `disable` function is given is an object with the following keys:
+- `operation`: The Operation that errored (contains query, variables, operationName, and context)
+- `response`: The Execution of the reponse (contains data and errors as well extensions if sent from the server)
+- `graphQLErrors`: An array of errors from the GraphQL endpoint
+- `networkError`: any error during the link execution or server response
+
+*Note*: `networkError` is the value from the downlink's `error` callback. In most cases, `graphQLErrors` is the `errors` field of the result from the last `next` call. A `networkError` can contain additional fields, such as a GraphQL object in the case of a failing HTTP status code from `apollo-link-http`. In this situation, `graphQLErrors` is an alias for `networkError.result.errors` if the property exists.
 
 ## Apollo Engine
 Apollo Engine supports recieving and fulfulling Automatic Persisted Queries. Simply adding this link into your client app will improve your network response times when using Apollo Engine.

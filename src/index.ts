@@ -1,13 +1,16 @@
 import { ApolloLink, Observable } from 'apollo-link';
 const sha256 = require('hash.js/lib/hash/sha/256');
 import { print } from 'graphql/language/printer';
-import { DocumentNode } from 'graphql';
+import { DocumentNode, ExecutionResult } from 'graphql';
 
 export const VERSION = 1;
 
-export type Options = {
-  generateHash?: (DocumentNode) => string;
-};
+namespace PersistedQueryLink {
+  export type Options = {
+    generateHash?: (DocumentNode) => string;
+    disable?: (result: ExecutionResult, context: any) => boolean;
+  };
+}
 
 export const defaultGenerateHash = query =>
   sha256()
@@ -16,10 +19,25 @@ export const defaultGenerateHash = query =>
 
 export const defaultOptions = {
   generateHash: defaultGenerateHash,
+  disable: ({ errors }, { response }) => {
+    // if the server doesn't support persisted queries, don't try anymore
+    if (
+      errors.some(({ message }) => message === 'PersistedQueryNotSupported')
+    ) {
+      return true;
+    }
+
+    // if the server explodes from trying persisted queries
+    if (response && response.statusCode && response.statusCode >= 500) {
+      return true;
+    }
+
+    return false;
+  },
 };
 
 export const createPersistedQueryLink = (
-  { generateHash }: Options = defaultOptions,
+  { generateHash, disable }: PersistedQueryLink.Options = defaultOptions,
 ) => {
   let supportsPersistedQueries = true;
 
@@ -55,21 +73,12 @@ export const createPersistedQueryLink = (
       let tried = false;
       const handler = {
         next: ({ data, errors, ...rest }) => {
-          if (
-            !tried &&
-            errors &&
-            errors.some(
-              ({ message }) => message.indexOf('PersistedQueryNot') > -1,
-            )
-          ) {
+          if (!tried && errors) {
             // if the server doesn't support persisted queries, don't try anymore
-            if (
-              errors.some(
-                ({ message }) => message === 'PersistedQueryNotSupported',
-              )
-            ) {
-              supportsPersistedQueries = false;
-            }
+            supportsPersistedQueries = !disable(
+              { data, errors, ...rest },
+              operation.getContext(),
+            );
 
             tried = true;
             // need to recall the link chain

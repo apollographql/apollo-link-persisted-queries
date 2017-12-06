@@ -2,7 +2,7 @@
 
 ### vNEXT
 
-### 0.0.1-beta.6
+### 0.1.0
 - handle network errors correctly for 400 and 500
 
 ### 0.0.1-beta.3

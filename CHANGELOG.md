@@ -2,6 +2,9 @@
 
 ### vNEXT
 
+### 0.0.1-beta.2
+- improve error handling through 500s and optional function to disable
+
 ### 0.0.1-beta.1
 - support hash lookup function for build time generation
 

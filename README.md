@@ -36,8 +36,9 @@ const link = createPersistedQueryLink().concat(createHttpLink({ uri: "/graphql" 
 Thats it! Now your client will start sending query signatures instead of the full text resulting in improved network performance!
 
 #### Options
-The createPersistedQueryLink function takes an optional object with configuration. Currently the only supported configutation is a key called `generateHash` which recieves the query and returns the hash. 
+The createPersistedQueryLink function takes an optional object with configuration. Currently the only supported configutations are a key called `generateHash` which recieves the query and returns the hash, a function to conditionally disabled sending persisted queries on error
 - `generateHash`: a function that takes the query document and returns the hash. If not provided, `generateHash` defaults to a fast implementation of sha256 + hex digest.
+- `disable`: a function which takes the response and context (typically including the fetch response as `response`) and returns a boolean to disable any future persited queries for that session. This defaults to disabling on `PersistedQueryNotSupported` or a 500 or greater status code
 
 ## Apollo Engine
 Apollo Engine supports recieving and fulfulling Automatic Persisted Queries. Simply adding this link into your client app will improve your network response times when using Apollo Engine.

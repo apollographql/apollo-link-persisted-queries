@@ -2,6 +2,9 @@
 
 ### vNEXT
 
+### 0.0.1-beta.6
+- handle network errors correctly for 400 and 500
+
 ### 0.0.1-beta.3
 - change default error handling to only disable on 400 error, not >= 500
 

@@ -14,12 +14,12 @@ export interface ErrorResponse {
 
 namespace PersistedQueryLink {
   export type Options = {
-    generateHash?: (DocumentNode) => string;
+    generateHash?: (document: DocumentNode) => string;
     disable?: (error: ErrorResponse) => boolean;
   };
 }
 
-export const defaultGenerateHash = query =>
+export const defaultGenerateHash = (query: DocumentNode): string =>
   sha256()
     .update(print(query))
     .digest('hex');
@@ -59,9 +59,15 @@ export const createPersistedQueryLink = (
 
   const calculated: Map<DocumentNode, string> = new Map();
   return new ApolloLink((operation, forward) => {
+    if (!forward) {
+      throw new Error(
+        'PersistedQueryLink cannot be the last link in the chain.',
+      );
+    }
+
     const { query } = operation;
 
-    let hashError;
+    let hashError: any;
     if (supportsPersistedQueries) {
       let hash = calculated.get(query);
       if (!hash) {
@@ -92,7 +98,7 @@ export const createPersistedQueryLink = (
           response,
           networkError,
         }: { response?: ExecutionResult; networkError?: Error },
-        cb,
+        cb: () => void,
       ) => {
         if ((!retried && (response && response.errors)) || networkError) {
           retried = true;
@@ -101,7 +107,7 @@ export const createPersistedQueryLink = (
             response,
             networkError,
             operation,
-            graphQLErrors: response ? response.errors : null,
+            graphQLErrors: response ? response.errors : undefined,
           };
           // if the server doesn't support persisted queries, don't try anymore
           supportsPersistedQueries = !disable(disablePayload);
@@ -109,6 +115,7 @@ export const createPersistedQueryLink = (
           // if its not found, we can try it again, otherwise just report the error
           if (
             (response &&
+              response.errors &&
               response.errors.some(
                 ({ message }) => message === 'PersistedQueryNotFound',
               )) ||
@@ -131,10 +138,10 @@ export const createPersistedQueryLink = (
         cb();
       };
       const handler = {
-        next: response => {
+        next: (response: ExecutionResult) => {
           retry({ response }, () => observer.next(response));
         },
-        error: networkError => {
+        error: (networkError: Error) => {
           retry({ networkError }, () => observer.error(networkError));
         },
         complete: observer.complete.bind(observer),

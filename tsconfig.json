@@ -1,16 +1,16 @@
 {
   "compilerOptions": {
     "target": "es5",
-    "lib": ["es6", "dom"],
+    "lib": ["es6", "dom", "esnext.asynciterable"],
     "module": "es2015",
     "moduleResolution": "node",
     "removeComments": true,
     "sourceMap": true,
     "declaration": true,
-    "noImplicitAny": false,
-    "noUnusedParameters": false,
+    "strict": true,
+    "noUnusedParameters": true,
     "noUnusedLocals": true,
-    "skipLibCheck": true,
+    "noImplicitThis": true,
     "rootDir": "./src",
     "outDir": "lib"
   },

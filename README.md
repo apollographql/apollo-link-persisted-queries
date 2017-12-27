@@ -8,7 +8,7 @@ In practice we've seen GraphQL query sizes ranging well above 10 KB *just for th
 
 Automatic Persisted Queries solves this problem by sending a generated ID instead of the query text as the request.
 
-For more information about this solution, read [this article announcing Automatic Persisted Queries].
+For more information about this solution, read [this article announcing Automatic Persisted Queries](https://dev-blog.apollodata.com/improve-graphql-performance-with-automatic-persisted-queries-c31d27b8e6ea).
 
 ## How it works
 1. When the client makes a query, it will optimistically send a short (64-byte) cryptographic hash instead of the full query text.

@@ -13,7 +13,7 @@ const makeAliasFields = (fieldName, numAliases) =>
   );
 
 const sleep = ms => new Promise(s => setTimeout(s, ms));
-const query = gql`
+export const query = gql`
   query Test($id: ID!) {
     foo(id: $id) {
       bar
@@ -22,19 +22,33 @@ const query = gql`
   }
 `;
 
-const variables = { id: 1 };
-const queryString = print(query);
-const hash = sha256
+export const shortQuery = gql`
+  query Test($id: ID!) {
+    foo(id: $id) {
+      bar
+    }
+  }
+`;
+
+export const variables = { id: 1 };
+export const queryString = print(query);
+export const hash = sha256
   .create()
   .update(queryString)
   .hex();
 
+export const shortQueryString = print(shortQuery);
+export const shortHash = sha256
+  .create()
+  .update(shortQueryString)
+  .hex();
+
 // support buildtime hash generation
 query.documentId = hash;
-const data = {
+export const data = {
   foo: { bar: true },
 };
-const response = JSON.stringify({ data });
+export const response = JSON.stringify({ data });
 const errors = [{ message: 'PersistedQueryNotFound' }];
 const giveUpErrors = [{ message: 'PersistedQueryNotSupported' }];
 const multipleErrors = [...errors, { message: 'not logged in' }];

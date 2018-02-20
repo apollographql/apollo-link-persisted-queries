@@ -11,6 +11,7 @@
     "noUnusedParameters": true,
     "noUnusedLocals": true,
     "noImplicitThis": true,
+    "jsx": "react",
     "rootDir": "./src",
     "outDir": "lib"
   },

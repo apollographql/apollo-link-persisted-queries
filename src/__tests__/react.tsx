@@ -8,8 +8,6 @@ import { createHttpLink } from 'apollo-link-http';
 import { print, parse } from 'graphql';
 import { sha256 } from 'js-sha256';
 
-import { data, response, shortHash as hash } from './';
-
 export const query = gql`
   query Test($filter: FilterObject) {
     foo(filter: $filter) {

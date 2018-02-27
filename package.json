@@ -90,7 +90,7 @@
     {
       "name": "apollo-link-persisted-queries",
       "path": "./lib/bundle.min.js",
-      "maxSize": "3.65 kb"
+      "maxSize": "3.78 kb"
     }
   ],
   "lint-staged": {

@@ -199,6 +199,27 @@ describe('failure path', () => {
       done();
     }, done.fail);
   });
+  it('sends GET for the first response only with useGETForHashedQueries', done => {
+    fetch.mockResponseOnce(errorResponse);
+    fetch.mockResponseOnce(response);
+    const link = createPersistedQuery({ useGETForHashedQueries: true }).concat(
+      createHttpLink(),
+    );
+
+    execute(link, { query, variables }).subscribe(result => {
+      expect(result.data).toEqual(data);
+      const [_, failure] = fetch.mock.calls[0];
+      expect(failure.method).toBe('GET');
+      expect(failure.body).not.toBeDefined();
+      const [uri, success] = fetch.mock.calls[1];
+      expect(success.method).toBe('POST');
+      expect(JSON.parse(success.body).query).toBe(queryString);
+      expect(
+        JSON.parse(success.body).extensions.persistedQuery.sha256Hash,
+      ).toBe(hash);
+      done();
+    }, done.fail);
+  });
   it('does not try again after recieving NotSupported error', done => {
     fetch.mockResponseOnce(giveUpResponse);
     fetch.mockResponseOnce(response);
@@ -242,7 +263,7 @@ describe('failure path', () => {
       done();
     }, done.fail);
   });
-  it('hanldes a 500 network error and still retries', done => {
+  it('handles a 500 network error and still retries', done => {
     let failed = false;
     fetch.mockResponseOnce(response);
 
@@ -280,7 +301,7 @@ describe('failure path', () => {
       }, done.fail);
     }, done.fail);
   });
-  it('hanldes a 400 network error and still retries', done => {
+  it('handles a 400 network error and still retries', done => {
     let failed = false;
     fetch.mockResponseOnce(response);
 

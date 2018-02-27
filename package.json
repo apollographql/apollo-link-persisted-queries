@@ -35,7 +35,7 @@
     "watch": "tsc -w -p ."
   },
   "dependencies": {
-    "apollo-link": "^1.0.3",
+    "apollo-link": "^1.2.1",
     "hash.js": "^1.1.3"
   },
   "peerDependencies": {

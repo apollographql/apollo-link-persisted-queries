@@ -1,7 +1,12 @@
 import { ApolloLink, Observable, Operation } from 'apollo-link';
 const sha256 = require('hash.js/lib/hash/sha/256');
 import { print } from 'graphql/language/printer';
-import { DocumentNode, ExecutionResult, GraphQLError } from 'graphql';
+import {
+  DefinitionNode,
+  DocumentNode,
+  ExecutionResult,
+  GraphQLError,
+} from 'graphql';
 
 export const VERSION = 1;
 
@@ -16,6 +21,7 @@ namespace PersistedQueryLink {
   export type Options = {
     generateHash?: (document: DocumentNode) => string;
     disable?: (error: ErrorResponse) => boolean;
+    useGETForHashedQueries?: boolean;
   };
 }
 
@@ -50,11 +56,26 @@ export const defaultOptions = {
 
     return false;
   },
+  useGETForHashedQueries: false,
 };
 
+function definitionIsMutation(d: DefinitionNode) {
+  return d.kind === 'OperationDefinition' && d.operation === 'mutation';
+}
+
+// Note that this also returns true for subscriptions.
+function operationIsQuery(operation: Operation) {
+  return !operation.query.definitions.some(definitionIsMutation);
+}
+
 export const createPersistedQueryLink = (
-  { generateHash, disable }: PersistedQueryLink.Options = defaultOptions,
+  options: PersistedQueryLink.Options = {},
 ) => {
+  const { generateHash, disable, useGETForHashedQueries } = Object.assign(
+    {},
+    defaultOptions,
+    options,
+  );
   let supportsPersistedQueries = true;
 
   const calculated: Map<DocumentNode, string> = new Map();
@@ -93,6 +114,8 @@ export const createPersistedQueryLink = (
 
       let subscription: ZenObservable.Subscription;
       let retried = false;
+      let originalFetchOptions: any;
+      let setFetchOptions = false;
       const retry = (
         {
           response,
@@ -100,7 +123,7 @@ export const createPersistedQueryLink = (
         }: { response?: ExecutionResult; networkError?: Error },
         cb: () => void,
       ) => {
-        if ((!retried && (response && response.errors)) || networkError) {
+        if (!retried && ((response && response.errors) || networkError)) {
           retried = true;
 
           const disablePayload = {
@@ -130,6 +153,9 @@ export const createPersistedQueryLink = (
                 includeExtensions: supportsPersistedQueries,
               },
             });
+            if (setFetchOptions) {
+              operation.setContext({ fetchOptions: originalFetchOptions });
+            }
             subscription = forward(operation).subscribe(handler);
 
             return;
@@ -154,6 +180,24 @@ export const createPersistedQueryLink = (
           includeExtensions: supportsPersistedQueries,
         },
       });
+
+      // If requested, set method to GET if there are no mutations. Remember the
+      // original fetchOptions so we can restore them if we fall back to a
+      // non-hashed request.
+      if (
+        useGETForHashedQueries &&
+        supportsPersistedQueries &&
+        operationIsQuery(operation)
+      ) {
+        operation.setContext(({ fetchOptions = {} }) => {
+          originalFetchOptions = fetchOptions;
+          return {
+            fetchOptions: Object.assign({}, fetchOptions, { method: 'GET' }),
+          };
+        });
+        setFetchOptions = true;
+      }
+
       subscription = forward(operation).subscribe(handler);
 
       return () => {

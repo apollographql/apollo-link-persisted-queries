@@ -1,6 +1,9 @@
 # Change log
 
 ### vNEXT
+- New option: useGETForHashedQueries
+- Improve error checking
+- Never retry a single request more than once, even with network errors
 
 ### 0.1.0
 - handle network errors correctly for 400 and 500

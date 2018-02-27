@@ -123,7 +123,7 @@ export const createPersistedQueryLink = (
         }: { response?: ExecutionResult; networkError?: Error },
         cb: () => void,
       ) => {
-        if ((!retried && (response && response.errors)) || networkError) {
+        if (!retried && ((response && response.errors) || networkError)) {
           retried = true;
 
           const disablePayload = {
@@ -154,7 +154,6 @@ export const createPersistedQueryLink = (
               },
             });
             if (setFetchOptions) {
-              setFetchOptions = false;
               operation.setContext({ fetchOptions: originalFetchOptions });
             }
             subscription = forward(operation).subscribe(handler);

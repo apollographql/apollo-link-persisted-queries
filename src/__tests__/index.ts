@@ -339,4 +339,27 @@ describe('failure path', () => {
       }, done.fail);
     }, done.fail);
   });
+
+  it('only retries a 400 network error once', done => {
+    let fetchCalls = 0;
+    const fetcher = (...args) => {
+      fetchCalls++;
+      return Promise.resolve({
+        json: () => Promise.resolve('This will blow up'),
+        text: () => Promise.resolve('THIS WILL BLOW UP'),
+        status: 400,
+      });
+    };
+    const link = createPersistedQuery().concat(
+      createHttpLink({ fetch: fetcher }),
+    );
+
+    execute(link, { query, variables }).subscribe(
+      result => done.fail,
+      error => {
+        expect(fetchCalls).toBe(2);
+        done();
+      },
+    );
+  });
 });

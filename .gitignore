@@ -46,10 +46,6 @@ jspm_packages
 # Yarn Integrity file
 .yarn-integrity
 
-# lock files
-yarn.lock
-package-lock.json
-
 # Compiled
 dist
 lib

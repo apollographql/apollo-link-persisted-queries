@@ -28,9 +28,16 @@ The persisted query link requires using the `http-link`. The easiest way to use 
 ```js
 import { createPersistedQueryLink } from "apollo-link-persisted-queries";
 import { createHttpLink } from "apollo-link-http";
+import { InMemoryCache } from "apollo-cache-inmemory";
+import ApolloClient from "apollo-client";
+
 
 // use this with Apollo Client
 const link = createPersistedQueryLink().concat(createHttpLink({ uri: "/graphql" }));
+const client = new ApolloClient({
+  cache: new InMemoryCache(),
+  link: link,
+});
 ```
 
 Thats it! Now your client will start sending query signatures instead of the full text resulting in improved network performance!

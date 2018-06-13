@@ -45,7 +45,7 @@
     "hash.js": "^1.1.3"
   },
   "peerDependencies": {
-    "graphql": "0.11.7"
+    "graphql": "^0.11.0 || ^0.12.0 || ^0.13.0"
   },
   "devDependencies": {
     "@types/graphql": "0.11.5",

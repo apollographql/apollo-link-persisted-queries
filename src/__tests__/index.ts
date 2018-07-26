@@ -148,6 +148,25 @@ describe('happy path', () => {
     }, done.fail);
   });
 
+  it('supports a custom hash key name', done => {
+    fetch.mockResponseOnce(response);
+    const hashKeyName = 'namedHash';
+    const link = createPersistedQuery({ hashKeyName }).concat(createHttpLink());
+
+    execute(link, { query, variables }).subscribe(result => {
+      expect(result.data).toEqual(data);
+      const [uri, request] = fetch.mock.calls[0];
+      expect(uri).toEqual('/graphql');
+      const parsed = JSON.parse(request.body);
+      expect(parsed.extensions.persistedQuery).toHaveProperty(hashKeyName);
+      expect(parsed.extensions.persistedQuery[hashKeyName]).toBe(
+        query.documentId,
+      );
+
+      done();
+    }, done.fail);
+  });
+
   it('errors if unable to convert to sha256', done => {
     fetch.mockResponseOnce(response);
     const link = createPersistedQuery().concat(createHttpLink());

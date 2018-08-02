@@ -20,6 +20,7 @@ export interface ErrorResponse {
 namespace PersistedQueryLink {
   export type Options = {
     generateHash?: (document: DocumentNode) => string;
+    hashKeyName?: string;
     disable?: (error: ErrorResponse) => boolean;
     useGETForHashedQueries?: boolean;
   };
@@ -30,8 +31,11 @@ export const defaultGenerateHash = (query: DocumentNode): string =>
     .update(print(query))
     .digest('hex');
 
+export const defaultHashKeyName: string = 'sha256Hash';
+
 export const defaultOptions = {
   generateHash: defaultGenerateHash,
+  hashKeyName: defaultHashKeyName,
   disable: ({ graphQLErrors, operation }: ErrorResponse) => {
     // if the server doesn't support persisted queries, don't try anymore
     if (
@@ -71,11 +75,12 @@ function operationIsQuery(operation: Operation) {
 export const createPersistedQueryLink = (
   options: PersistedQueryLink.Options = {},
 ) => {
-  const { generateHash, disable, useGETForHashedQueries } = Object.assign(
-    {},
-    defaultOptions,
-    options,
-  );
+  const {
+    generateHash,
+    hashKeyName,
+    disable,
+    useGETForHashedQueries,
+  } = Object.assign({}, defaultOptions, options);
   let supportsPersistedQueries = true;
 
   const calculated: Map<DocumentNode, string> = new Map();
@@ -102,7 +107,7 @@ export const createPersistedQueryLink = (
 
       operation.extensions.persistedQuery = {
         version: VERSION,
-        sha256Hash: hash,
+        [hashKeyName]: hash,
       };
     }
 

@@ -179,6 +179,23 @@ describe('happy path', () => {
       done();
     }, 10);
   });
+  it("doesn't hash an operation specified by ignoreOperations and sends the query", done => {
+    fetch.mockResponseOnce(errorResponse);
+    fetch.mockResponseOnce(response);
+    const link = createPersistedQuery({
+      ignoreOperations: ['Test'],
+    }).concat(createHttpLink());
+
+    execute(link, { query, variables }).subscribe(result => {
+      expect(result.data).toEqual(data);
+      const [uri, request] = fetch.mock.calls[0];
+      expect(uri).toEqual('/graphql');
+      const parsed = JSON.parse(request.body);
+      expect(parsed.query).toBe(print(query));
+      expect(parsed.extensions).toBeUndefined();
+      done();
+    }, done.fail);
+  });
 });
 describe('failure path', () => {
   beforeEach(fetch.mockReset);

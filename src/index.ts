@@ -22,6 +22,7 @@ namespace PersistedQueryLink {
     generateHash?: (document: DocumentNode) => string;
     disable?: (error: ErrorResponse) => boolean;
     useGETForHashedQueries?: boolean;
+    ignoreOperations?: string[];
   };
 }
 
@@ -57,6 +58,7 @@ export const defaultOptions = {
     return false;
   },
   useGETForHashedQueries: false,
+  ignoreOperations: [] as string[],
 };
 
 function definitionIsMutation(d: DefinitionNode) {
@@ -71,11 +73,12 @@ function operationIsQuery(operation: Operation) {
 export const createPersistedQueryLink = (
   options: PersistedQueryLink.Options = {},
 ) => {
-  const { generateHash, disable, useGETForHashedQueries } = Object.assign(
-    {},
-    defaultOptions,
-    options,
-  );
+  const {
+    generateHash,
+    disable,
+    useGETForHashedQueries,
+    ignoreOperations,
+  } = Object.assign({}, defaultOptions, options);
   let supportsPersistedQueries = true;
 
   const calculated: Map<DocumentNode, string> = new Map();
@@ -85,6 +88,11 @@ export const createPersistedQueryLink = (
         'PersistedQueryLink cannot be the last link in the chain.',
       );
     }
+
+    const shouldPersistOperation =
+      ignoreOperations.findIndex((a: string): boolean => {
+        return a === operation.operationName;
+      }) === -1;
 
     const { query } = operation;
 
@@ -100,10 +108,12 @@ export const createPersistedQueryLink = (
         }
       }
 
-      operation.extensions.persistedQuery = {
-        version: VERSION,
-        sha256Hash: hash,
-      };
+      if (shouldPersistOperation) {
+        operation.extensions.persistedQuery = {
+          version: VERSION,
+          sha256Hash: hash,
+        };
+      }
     }
 
     return new Observable(observer => {
@@ -150,7 +160,8 @@ export const createPersistedQueryLink = (
             operation.setContext({
               http: {
                 includeQuery: true,
-                includeExtensions: supportsPersistedQueries,
+                includeExtensions:
+                  supportsPersistedQueries && shouldPersistOperation,
               },
             });
             if (setFetchOptions) {
@@ -176,8 +187,8 @@ export const createPersistedQueryLink = (
       // don't send the query the first time
       operation.setContext({
         http: {
-          includeQuery: !supportsPersistedQueries,
-          includeExtensions: supportsPersistedQueries,
+          includeQuery: !shouldPersistOperation,
+          includeExtensions: supportsPersistedQueries && shouldPersistOperation,
         },
       });
 

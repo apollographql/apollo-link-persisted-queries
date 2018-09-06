@@ -45,9 +45,10 @@ Thats it! Now your client will start sending query signatures instead of the ful
 #### Options
 The createPersistedQueryLink function takes an optional object with configuration. Currently the only supported configutations are a key called `generateHash` which recieves the query and returns the hash, a function to conditionally disabled sending persisted queries on error
 - `generateHash`: a function that takes the query document and returns the hash. If not provided, `generateHash` defaults to a fast implementation of sha256 + hex digest.
-- `useGETForHashedQueries`: set to `true` to use the HTTP `GET` method when sending the hashed version of queries (but not for mutations). `GET` requests require `apollo-link-http` 1.4.0 or newer, and are not compatible with `apollo-link-batch-http`. 
+- `useGETForHashedQueries`: set to `true` to use the HTTP `GET` method when sending the hashed version of queries (but not for mutations). `GET` requests require `apollo-link-http` 1.4.0 or newer, and are not compatible with `apollo-link-batch-http`.
 > If you want to use `GET` for non-mutation queries whether or not they are hashed, pass `useGETForQueries: true` option to `createHttpLink` from `apollo-link-http` instead. If you want to use `GET` for all requests, pass `fetchOptions: {method: 'GET'}` to `createHttpLink`.
 - `disable`: a function which takes an ErrorResponse (see below) and returns a boolean to disable any future persited queries for that session. This defaults to disabling on `PersistedQueryNotSupported` or a 400 or 500 http error
+- `ignoreOperations`: an array of operation names you wish to not persist
 
 **ErrorResponse**
 The argument that the optional `disable` function is given is an object with the following keys:
@@ -66,7 +67,7 @@ Apollo Engine supports recieving and fulfulling Automatic Persisted Queries. Sim
 Automatic Persisted Queries are made up of three parts: the query signature, error responses, and the negotiaion protocol.
 
 **Query Signature**
-The query signature for Automatic Persisted Queries is sent along the extensions field of a request from the client. This is a transport independent way to send extra information along with the operation. 
+The query signature for Automatic Persisted Queries is sent along the extensions field of a request from the client. This is a transport independent way to send extra information along with the operation.
 
 ```js
 {

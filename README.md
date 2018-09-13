@@ -43,7 +43,7 @@ const client = new ApolloClient({
 Thats it! Now your client will start sending query signatures instead of the full text resulting in improved network performance!
 
 #### Options
-The createPersistedQueryLink function takes an optional object with configuration. Currently the only supported configutations are a key called `generateHash` which recieves the query and returns the hash, a function to conditionally disabled sending persisted queries on error
+The createPersistedQueryLink function takes an optional object with configuration. Currently the only supported configutations are a key called `generateHash` which receives the query and returns the hash, a function to conditionally disabled sending persisted queries on error
 - `generateHash`: a function that takes the query document and returns the hash. If not provided, `generateHash` defaults to a fast implementation of sha256 + hex digest.
 - `useGETForHashedQueries`: set to `true` to use the HTTP `GET` method when sending the hashed version of queries (but not for mutations). `GET` requests require `apollo-link-http` 1.4.0 or newer, and are not compatible with `apollo-link-batch-http`. 
 > If you want to use `GET` for non-mutation queries whether or not they are hashed, pass `useGETForQueries: true` option to `createHttpLink` from `apollo-link-http` instead. If you want to use `GET` for all requests, pass `fetchOptions: {method: 'GET'}` to `createHttpLink`.
@@ -59,7 +59,7 @@ The argument that the optional `disable` function is given is an object with the
 *Note*: `networkError` is the value from the downlink's `error` callback. In most cases, `graphQLErrors` is the `errors` field of the result from the last `next` call. A `networkError` can contain additional fields, such as a GraphQL object in the case of a failing HTTP status code from `apollo-link-http`. In this situation, `graphQLErrors` is an alias for `networkError.result.errors` if the property exists.
 
 ## Apollo Engine
-Apollo Engine supports recieving and fulfulling Automatic Persisted Queries. Simply adding this link into your client app will improve your network response times when using Apollo Engine.
+Apollo Engine supports receiving and fulfulling Automatic Persisted Queries. Simply adding this link into your client app will improve your network response times when using Apollo Engine.
 
 
 ### Protocol
@@ -128,7 +128,7 @@ In order to support Automatic Persisted Queries, the client and server must foll
 *Happy Path*
 1. Client sends query signature with no `query` field
 2. Server looks up query based on hash, if found, it resolves the data
-3. Client recieves data and completes request
+3. Client receives data and completes request
 
 *Missing hash path*
 1. Client sends query signature with no `query` field
@@ -136,7 +136,7 @@ In order to support Automatic Persisted Queries, the client and server must foll
 3. Server responds with NotFound error response
 4. Client sends both hash and query string to Server
 5. Server fulfills response and saves query string + hash for future lookup
-6. Client recieves data and completes request
+6. Client receives data and completes request
 
 ### Build time generation
 If you want to avoid hashing in the browser, you can use a build script to include the hash as part of the request. Then you pass a function to retrieve that hash when the operation is run. This works well with projects like [this](https://github.com/leoasis/graphql-persisted-document-loader) which uses webpack to generate the hashes at build time.

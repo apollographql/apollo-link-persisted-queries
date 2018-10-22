@@ -220,7 +220,7 @@ describe('failure path', () => {
       done();
     }, done.fail);
   });
-  it('does not try again after recieving NotSupported error', done => {
+  it('does not try again after receiving NotSupported error', done => {
     fetch.mockResponseOnce(giveUpResponse);
     fetch.mockResponseOnce(response);
 

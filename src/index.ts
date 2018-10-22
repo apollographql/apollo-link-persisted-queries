@@ -68,6 +68,13 @@ function operationIsQuery(operation: Operation) {
   return !operation.query.definitions.some(definitionIsMutation);
 }
 
+const { hasOwnProperty } = Object.prototype;
+const hashesKeyString = '__createPersistedQueryLink_hashes';
+const hashesKey = typeof Symbol === 'function'
+  ? Symbol.for(hashesKeyString)
+  : hashesKeyString;
+let nextHashesChildKey = 0;
+
 export const createPersistedQueryLink = (
   options: PersistedQueryLink.Options = {},
 ) => {
@@ -78,7 +85,26 @@ export const createPersistedQueryLink = (
   );
   let supportsPersistedQueries = true;
 
-  const calculated: Map<DocumentNode, string> = new Map();
+  const hashesChildKey = 'forLink' + nextHashesChildKey++;
+  function getQueryHash(query: DocumentNode): string {
+    if (!query || typeof query !== "object") {
+      // If the query is not an object, we won't be able to store its hash as
+      // a property of query[hashesKey], so we let generateHash(query) decide
+      // what to do with the bogus query.
+      return generateHash(query);
+    }
+    if (!hasOwnProperty.call(query, hashesKey)) {
+      Object.defineProperty(query, hashesKey, {
+        value: Object.create(null),
+        enumerable: false,
+      });
+    }
+    const hashes = (query as any)[hashesKey];
+    return hasOwnProperty.call(hashes, hashesChildKey)
+      ? hashes[hashesChildKey]
+      : hashes[hashesChildKey] = generateHash(query);
+  }
+
   return new ApolloLink((operation, forward) => {
     if (!forward) {
       throw new Error(
@@ -90,20 +116,14 @@ export const createPersistedQueryLink = (
 
     let hashError: any;
     if (supportsPersistedQueries) {
-      let hash = calculated.get(query);
-      if (!hash) {
-        try {
-          hash = generateHash(query);
-          calculated.set(query, hash);
-        } catch (e) {
-          hashError = e;
-        }
+      try {
+        operation.extensions.persistedQuery = {
+          version: VERSION,
+          sha256Hash: getQueryHash(query),
+        };
+      } catch (e) {
+        hashError = e;
       }
-
-      operation.extensions.persistedQuery = {
-        version: VERSION,
-        sha256Hash: hash,
-      };
     }
 
     return new Observable(observer => {

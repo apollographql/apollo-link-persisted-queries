@@ -81,7 +81,7 @@ The query signature for Automatic Persisted Queries is sent along the extensions
 }
 ```
 
-When sending an Automatic Persisted Query, the client ommits the `query` field normally present, and instead sends an extension field with a `persistedQuery` object as shown above. The hash algorithm defaults to a `sha256` hash of the query string.
+When sending an Automatic Persisted Query, the client omits the `query` field normally present, and instead sends an extension field with a `persistedQuery` object as shown above. The hash must be a `sha256` hash of the query string.
 
 If the client needs to register the hash, the query signature will be the same but include the full query text like so:
 
@@ -102,7 +102,7 @@ If the client needs to register the hash, the query signature will be the same b
 This should only happen once across all clients when a new query is introduced into your application.
 
 **Error Responses**
-When the initial query signature is received by a backend, if it is unable to find the hash previously stored, it must send back the following response signature:
+When the initial query signature is received by a backend, if it is unable to find the hash previously stored, it must send back the following response signature with a 200 OK status code:
 
 ```js
 {

@@ -13,7 +13,7 @@ For more information about this solution, read [this article announcing Automati
 ## How it works
 1. When the client makes a query, it will optimistically send a short (64-byte) cryptographic hash instead of the full query text.
 2. If the backend recognizes the hash, it will retrieve the full text of the query and execute it.
-3. If the backend doesn't recogize the hash, it will ask the client to send the hash and the query text to it can store them mapped together for future lookups. During this request, the backend will also fulfill the data request.
+3. If the backend doesn't recogize the hash, it will ask the client to send the hash and the query text so it can store them mapped together for future lookups. During this request, the backend will also fulfill the data request.
 
 This library is a client implementation for use with Apollo Client by using custom Apollo Link.
 

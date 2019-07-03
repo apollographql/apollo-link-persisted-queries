@@ -52,7 +52,7 @@ The createPersistedQueryLink function takes an optional object with configuratio
 **ErrorResponse**
 The argument that the optional `disable` function is given is an object with the following keys:
 - `operation`: The Operation that errored (contains query, variables, operationName, and context)
-- `response`: The Execution of the reponse (contains data and errors as well extensions if sent from the server)
+- `response`: The Execution of the response (contains data and errors as well extensions if sent from the server)
 - `graphQLErrors`: An array of errors from the GraphQL endpoint
 - `networkError`: any error during the link execution or server response
 

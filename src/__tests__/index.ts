@@ -1,8 +1,12 @@
 import gql from 'graphql-tag';
-import { ApolloLink, execute, Observable } from 'apollo-link';
+import {
+  ApolloLink,
+  execute,
+  Observable,
+  createHttpLink,
+} from '@apollo/client';
 import { sha256 } from 'js-sha256';
 import { print, parse } from 'graphql';
-import { createHttpLink } from 'apollo-link-http';
 import { cloneDeep, find, times } from 'lodash';
 
 import { createPersistedQueryLink as createPersistedQuery, VERSION } from '../';

@@ -1,10 +1,14 @@
 import * as React from 'react';
 import * as ReactDOM from 'react-dom/server';
-import { graphql, ApolloProvider, getDataFromTree } from 'react-apollo';
-import { InMemoryCache as Cache } from 'apollo-cache-inmemory';
-import { ApolloClient } from 'apollo-client';
+import {
+  ApolloProvider,
+  InMemoryCache as Cache,
+  ApolloClient,
+  createHttpLink,
+} from '@apollo/client';
+import { graphql } from '@apollo/react-hoc';
+import { getDataFromTree } from '@apollo/react-ssr';
 import gql from 'graphql-tag';
-import { createHttpLink } from 'apollo-link-http';
 import { print, parse } from 'graphql';
 import { sha256 } from 'js-sha256';
 
@@ -75,9 +79,8 @@ describe('react application', () => {
     );
 
     // preload all the data for client side request (with filter)
-    await getDataFromTree(app);
-    const markup = ReactDOM.renderToString(app);
-    expect(markup).toContain('data was returned');
+    const result = await getDataFromTree(app);
+    expect(result).toContain('data was returned');
     let [_, request] = fetch.mock.calls[0];
     expect(request.body).toBe(
       JSON.stringify({

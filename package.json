@@ -10,29 +10,23 @@
   "typings": "./lib/index.d.ts",
   "repository": {
     "type": "git",
-    "url":
-      "git+https://github.com/apollographql/apollo-link-persisted-queries.git"
+    "url": "git+https://github.com/apollographql/apollo-link-persisted-queries.git"
   },
   "bugs": {
-    "url":
-      "https://github.com/apollographql/apollo-link-persisted-queries/issues"
+    "url": "https://github.com/apollographql/apollo-link-persisted-queries/issues"
   },
-  "homepage":
-    "https://github.com/apollographql/apollo-link-persisted-queries#readme",
+  "homepage": "https://github.com/apollographql/apollo-link-persisted-queries#readme",
   "scripts": {
-    "build:browser":
-      "browserify ./lib/bundle.umd.js -o=./lib/bundle.js --i @apollo/client/core --i graphql && npm run minify:browser",
+    "build:browser": "browserify ./lib/bundle.umd.js -o=./lib/bundle.js --i @apollo/client/core --i graphql && npm run minify:browser",
     "build": "tsc -p .",
     "bundle": "rollup -c",
     "clean": "rimraf lib/* && rimraf coverage/*",
     "coverage:upload": "codecov",
     "danger": "danger run --verbose",
     "filesize": "npm run build && npm run build:browser && bundlesize",
-    "lint":
-      "prettier --trailing-comma all --single-quote --write \"src/**/*.{j,t}s*\"",
+    "lint": "prettier --trailing-comma all --single-quote --write \"src/**/*.{j,t}s*\"",
     "lint-staged": "lint-staged",
-    "minify:browser":
-      "uglifyjs -c -m -o ./lib/bundle.min.js -- ./lib/bundle.js",
+    "minify:browser": "uglifyjs -c -m -o ./lib/bundle.min.js -- ./lib/bundle.js",
     "postbuild": "npm run bundle",
     "prebuild": "npm run clean",
     "prepublishOnly": "npm run clean && npm run build",
@@ -66,7 +60,7 @@
     "lint-staged": "4.3.0",
     "lodash": "^4.17.4",
     "pre-commit": "1.2.2",
-    "prettier": "1.7.4",
+    "prettier": "^1.19.1",
     "react": "^16.12.0",
     "react-dom": "^16.12.0",
     "rimraf": "2.6.1",
@@ -80,8 +74,15 @@
       ".(ts|tsx)": "<rootDir>/node_modules/ts-jest/preprocessor.js"
     },
     "testRegex": "(/__tests__/.*|\\.(test|spec))\\.(ts|tsx|js)$",
-    "moduleFileExtensions": ["ts", "tsx", "js", "json"],
-    "setupFiles": ["./scripts/jest.js"]
+    "moduleFileExtensions": [
+      "ts",
+      "tsx",
+      "js",
+      "json"
+    ],
+    "setupFiles": [
+      "./scripts/jest.js"
+    ]
   },
   "bundlesize": [
     {
@@ -99,7 +100,10 @@
       "prettier --trailing-comma all --single-quote --write",
       "git add"
     ],
-    "*.json*": ["prettier --write", "git add"]
+    "*.json*": [
+      "prettier --write",
+      "git add"
+    ]
   },
   "pre-commit": "lint-staged"
 }

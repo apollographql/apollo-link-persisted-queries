@@ -1,4 +1,9 @@
-import { ApolloLink, Observable, Operation } from '@apollo/client';
+import {
+  ApolloLink,
+  Observable,
+  Observer,
+  Operation,
+} from '@apollo/client/core';
 const sha256 = require('hash.js/lib/hash/sha/256');
 import { print } from 'graphql/language/printer';
 import {
@@ -11,7 +16,7 @@ import {
 export const VERSION = 1;
 
 export interface ErrorResponse {
-  graphQLErrors?: GraphQLError[];
+  graphQLErrors?: readonly GraphQLError[];
   networkError?: Error;
   response?: ExecutionResult;
   operation: Operation;
@@ -125,9 +130,9 @@ export const createPersistedQueryLink = (
       }
     }
 
-    return new Observable(observer => {
+    return new Observable((observer: Observer<ExecutionResult>) => {
       if (hashError) {
-        observer.error(hashError);
+        observer.error!(hashError);
         return;
       }
 
@@ -151,6 +156,7 @@ export const createPersistedQueryLink = (
             operation,
             graphQLErrors: response ? response.errors : undefined,
           };
+
           // if the server doesn't support persisted queries, don't try anymore
           supportsPersistedQueries = !disable(disablePayload);
 
@@ -159,7 +165,8 @@ export const createPersistedQueryLink = (
             (response &&
               response.errors &&
               response.errors.some(
-                ({ message }) => message === 'PersistedQueryNotFound',
+                ({ message }: { message: string }) =>
+                  message === 'PersistedQueryNotFound',
               )) ||
             !supportsPersistedQueries
           ) {
@@ -184,12 +191,12 @@ export const createPersistedQueryLink = (
       };
       const handler = {
         next: (response: ExecutionResult) => {
-          retry({ response }, () => observer.next(response));
+          retry({ response }, () => observer.next!(response));
         },
         error: (networkError: Error) => {
-          retry({ networkError }, () => observer.error(networkError));
+          retry({ networkError }, () => observer.error!(networkError));
         },
-        complete: observer.complete.bind(observer),
+        complete: observer.complete!.bind(observer),
       };
 
       // don't send the query the first time
@@ -208,12 +215,14 @@ export const createPersistedQueryLink = (
         supportsPersistedQueries &&
         operationIsQuery(operation)
       ) {
-        operation.setContext(({ fetchOptions = {} }) => {
-          originalFetchOptions = fetchOptions;
-          return {
-            fetchOptions: Object.assign({}, fetchOptions, { method: 'GET' }),
-          };
-        });
+        operation.setContext(
+          ({ fetchOptions = {} }: { fetchOptions: Record<string, any> }) => {
+            originalFetchOptions = fetchOptions;
+            return {
+              fetchOptions: Object.assign({}, fetchOptions, { method: 'GET' }),
+            };
+          },
+        );
         setFetchOptions = true;
       }
 

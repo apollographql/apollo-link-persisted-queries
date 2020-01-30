@@ -1,5 +1,5 @@
-import gql from 'graphql-tag';
 import {
+  gql,
   ApolloLink,
   execute,
   Observable,

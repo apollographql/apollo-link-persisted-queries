@@ -17,7 +17,7 @@
   },
   "homepage": "https://github.com/apollographql/apollo-link-persisted-queries#readme",
   "scripts": {
-    "build:browser": "browserify ./lib/bundle.umd.js -o=./lib/bundle.js --i @apollo/client/core --i graphql && npm run minify:browser",
+    "build:browser": "browserify ./lib/bundle.umd.js -o=./lib/bundle.js --i @apollo/client/core --i hash.js --i graphql && npm run minify:browser",
     "build": "tsc -p .",
     "bundle": "rollup -c",
     "clean": "rimraf lib/* && rimraf coverage/*",

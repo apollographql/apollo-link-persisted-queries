@@ -5,11 +5,11 @@ import {
   InMemoryCache as Cache,
   ApolloClient,
   createHttpLink,
+  gql,
 } from '@apollo/client';
-import { graphql } from '@apollo/react-hoc';
-import { getDataFromTree } from '@apollo/react-ssr';
-import gql from 'graphql-tag';
-import { print, parse } from 'graphql';
+import { graphql } from '@apollo/client/react/hoc';
+import { getDataFromTree } from '@apollo/client/react/ssr';
+import { print } from 'graphql';
 import { sha256 } from 'js-sha256';
 
 import { data, response, shortHash as hash } from './';

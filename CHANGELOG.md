@@ -2,6 +2,8 @@
 
 ### 1.0.0
 
+> **Note:** As of 1.0.0, this package is now published as `@apollo/link-persisted-queries`.
+
 - Updated to use `@apollo/client` 3.  <br/>
   [@hwillson](https://github.com/hwillson) in [#48](https://github.com/apollographql/apollo-link-persisted-queries/pull/48)
 

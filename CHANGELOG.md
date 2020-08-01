@@ -1,6 +1,9 @@
 # Change log
 
-### vNEXT
+### 1.0.0
+
+- Updated to use `@apollo/client` 3.  <br/>
+  [@hwillson](https://github.com/hwillson) in [#48](https://github.com/apollographql/apollo-link-persisted-queries/pull/48)
 
 ### 0.2.0
 - New option: useGETForHashedQueries

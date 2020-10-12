@@ -1,5 +1,5 @@
 import { ApolloLink, Observable, Operation } from 'apollo-link';
-const sha256 = require('hash.js/lib/hash/sha/256');
+import { sha256 } from 'hash.js';
 import { print } from 'graphql/language/printer';
 import {
   DefinitionNode,

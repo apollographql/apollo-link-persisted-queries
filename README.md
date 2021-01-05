@@ -1,6 +1,8 @@
 Automatic Persisted Queries
 ---
 
+> **NOTE:** This project has been merged into the `@apollo/client` core, which means it is now being maintained in the https://github.com/apollographql/apollo-client repo. Refer to the [updated docs](https://www.apollographql.com/docs/react/api/link/persisted-queries/) for usage instructions. 
+
 ## Problem to solve
 Unlike REST APIs that use a fixed URL to load data, GraphQL provides a rich query language that can be used to express the shape of application data requirements.  This is a marvellous advancement in technology, but it comes at a cost: GraphQL query strings are often much longer than REST URLS — in some cases by many kilobytes.
 

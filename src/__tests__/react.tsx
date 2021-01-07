@@ -6,7 +6,7 @@ import { ApolloClient } from 'apollo-client';
 import gql from 'graphql-tag';
 import { createHttpLink } from 'apollo-link-http';
 import { print, parse } from 'graphql';
-import { sha256 } from 'js-sha256';
+import { createHash } from 'crypto';
 
 import { data, response, shortHash as hash } from './';
 
@@ -35,10 +35,9 @@ const data2 = {
 const response = JSON.stringify({ data });
 const response2 = JSON.stringify({ data: data2 });
 const queryString = print(query);
-const hash = sha256
-  .create()
+const hash = createHash('sha256')
   .update(queryString)
-  .hex();
+  .digest('hex');
 
 import { createPersistedQueryLink as createPersistedQuery, VERSION } from '../';
 

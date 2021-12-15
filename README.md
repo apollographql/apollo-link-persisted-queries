@@ -1,6 +1,8 @@
 Automatic Persisted Queries
 ---
 
+> **NOTE:** This project has been merged into the `@apollo/client` core, which means it is now being maintained in the https://github.com/apollographql/apollo-client repo. Refer to the [updated docs](https://www.apollographql.com/docs/react/api/link/persisted-queries/) for usage instructions. 
+
 ## Problem to solve
 Unlike REST APIs that use a fixed URL to load data, GraphQL provides a rich query language that can be used to express the shape of application data requirements.  This is a marvellous advancement in technology, but it comes at a cost: GraphQL query strings are often much longer than REST URLS — in some cases by many kilobytes.
 
@@ -13,7 +15,7 @@ For more information about this solution, read [this article announcing Automati
 ## How it works
 1. When the client makes a query, it will optimistically send a short (64-byte) cryptographic hash instead of the full query text.
 2. If the backend recognizes the hash, it will retrieve the full text of the query and execute it.
-3. If the backend doesn't recogize the hash, it will ask the client to send the hash and the query text, so it can store them mapped together for future lookups. During this request, the backend will also fulfill the data request.
+3. If the backend doesn't recognize the hash, it will ask the client to send the hash and the query text, so it can store them mapped together for future lookups. During this request, the backend will also fulfill the data request.
 
 This library is a client implementation for use with Apollo Client by using custom Apollo Link.
 
@@ -52,7 +54,7 @@ The createPersistedQueryLink function takes an optional object with configuratio
 **ErrorResponse**
 The argument that the optional `disable` function is given is an object with the following keys:
 - `operation`: The Operation that errored (contains query, variables, operationName, and context)
-- `response`: The Execution of the reponse (contains data and errors as well extensions if sent from the server)
+- `response`: The Execution of the response (contains data and errors as well extensions if sent from the server)
 - `graphQLErrors`: An array of errors from the GraphQL endpoint
 - `networkError`: any error during the link execution or server response
 

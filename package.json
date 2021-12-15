@@ -74,7 +74,7 @@
     "rimraf": "2.6.1",
     "rollup": "0.45.2",
     "ts-jest": "21.1.4",
-    "typescript": "2.5.1",
+    "typescript": "4.5.4",
     "uglify-js": "3.1.5"
   },
   "jest": {

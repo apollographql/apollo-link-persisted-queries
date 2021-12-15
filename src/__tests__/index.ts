@@ -1,6 +1,6 @@
 import gql from 'graphql-tag';
 import { ApolloLink, execute, Observable } from 'apollo-link';
-import { sha256 } from 'js-sha256';
+import { createHash } from 'crypto';
 import { print, parse } from 'graphql';
 import { createHttpLink } from 'apollo-link-http';
 import { cloneDeep, find, times } from 'lodash';
@@ -13,6 +13,12 @@ const makeAliasFields = (fieldName, numAliases) =>
   );
 
 const sleep = ms => new Promise(s => setTimeout(s, ms));
+
+const serverSideSha256 = text =>
+  createHash('sha256')
+    .update(text)
+    .digest('hex');
+
 export const query = gql`
   query Test($id: ID!) {
     foo(id: $id) {
@@ -30,18 +36,30 @@ export const shortQuery = gql`
   }
 `;
 
+export const queryWithUtf8Chars = gql`
+  query Test($id: ID!) {
+    foo(
+      id: $id
+      twoByteChars: "привет"
+      threeByteChars: "您好"
+      fourByteChars: "👋🙌"
+    ) {
+      bar
+    }
+  }
+`;
+
 export const variables = { id: 1 };
 export const queryString = print(query);
-export const hash = sha256
-  .create()
-  .update(queryString)
-  .hex();
+export const hash = serverSideSha256(queryString);
 
 export const shortQueryString = print(shortQuery);
-export const shortHash = sha256
-  .create()
-  .update(shortQueryString)
-  .hex();
+export const shortHash = serverSideSha256(queryString);
+
+export const queryWithUtf8CharsString = print(queryWithUtf8Chars);
+export const queryWithUtf8CharsHash = serverSideSha256(
+  queryWithUtf8CharsString,
+);
 
 // support buildtime hash generation
 query.documentId = hash;
@@ -126,6 +144,24 @@ describe('happy path', () => {
         expect(result2.data).toEqual(data);
         done();
       }, done.fail);
+    }, done.fail);
+  });
+  it('correctly calculates hash when utf8 characters are present in the query', done => {
+    fetch.mockResponseOnce(response);
+    const link = createPersistedQuery().concat(createHttpLink());
+
+    execute(link, {
+      query: queryWithUtf8Chars,
+      variables,
+    }).subscribe(result => {
+      expect(result.data).toEqual(data);
+      const [uri, request] = fetch.mock.calls[0];
+      expect(uri).toEqual('/graphql');
+      const parsed = JSON.parse(request.body);
+      expect(parsed.extensions.persistedQuery.sha256Hash).toBe(
+        queryWithUtf8CharsHash,
+      );
+      done();
     }, done.fail);
   });
   it('supports loading the hash from other method', done => {

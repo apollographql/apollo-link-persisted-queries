@@ -57,7 +57,7 @@
     "danger": "^10.7.1",
     "graphql": "^15.3.0",
     "graphql-tag": "^2.5.0",
-    "jest": "^23.6.0",
+    "jest": "^27.4.5",
     "jest-fetch-mock": "^3.0.3",
     "lodash": "^4.17.4",
     "pre-commit": "1.2.2",

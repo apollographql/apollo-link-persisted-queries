@@ -62,7 +62,7 @@
     "lodash": "^4.17.4",
     "pre-commit": "1.2.2",
     "prettier": "2.5.1",
-    "react": "^16.2.0",
+    "react": "^17.0.2",
     "react-apollo": "^2.0.4",
     "react-dom": "^16.2.0",
     "rimraf": "3.0.2",
